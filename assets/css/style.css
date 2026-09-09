@@ -1,0 +1,42 @@
+body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Faixa de prioridade na lateral do card de tarefa */
+.task-card {
+    border-left: 4px solid transparent;
+}
+
+.task-card[data-priority="alta"] { border-left-color: var(--bs-danger); }
+.task-card[data-priority="media"] { border-left-color: var(--bs-warning); }
+.task-card[data-priority="baixa"] { border-left-color: var(--bs-success); }
+
+.task-card.concluida {
+    opacity: 0.55;
+}
+
+.task-card.concluida .task-title {
+    text-decoration: line-through;
+}
+
+.checkbox-round {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.fab {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 28px;
+    line-height: 1;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
