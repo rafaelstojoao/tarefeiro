@@ -1,9 +1,9 @@
 <?php
 // Credenciais do banco - ajuste para cada ambiente (local XAMPP vs cPanel)
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'tarefeiro');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', '128.201.75.100');
+define('DB_NAME', 'projdev_tarefeiro');
+define('DB_USER', 'projdev_tarefeirouser');
+define('DB_PASS', 'Rf=t}l}!5*gn*jr~');
 
 function getDbConnection(): PDO
 {
