@@ -1,6 +1,6 @@
 <?php
 // Credenciais do banco - ajuste para cada ambiente (local XAMPP vs cPanel)
-define('DB_HOST', '128.201.75.100');
+define('DB_HOST', 'localhost');
 define('DB_NAME', 'projdev_tarefeiro');
 define('DB_USER', 'projdev_tarefeirouser');
 define('DB_PASS', 'Rf=t}l}!5*gn*jr~');
