@@ -1,9 +1,12 @@
-const CACHE_NAME = 'tarefeiro-v1';
+const CACHE_NAME = 'tarefeiro-v2';
 const APP_SHELL = [
     'index.html',
+    'list.html',
     'login.html',
     'assets/css/style.css',
-    'assets/js/app.js',
+    'assets/js/common.js',
+    'assets/js/calendar.js',
+    'assets/js/list.js',
     'assets/js/login.js',
     'manifest.json',
 ];

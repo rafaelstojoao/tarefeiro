@@ -61,11 +61,13 @@ A biblioteca PHP de push (`minishlink/web-push`) já vem **pré-instalada na pas
 
 - `api/` — endpoints PHP (login, logout, sessão, CRUD de tarefas, inscrição/push)
 - `config/database.php` — credenciais do MySQL e timezone da aplicação
-- `config/push.php` — chaves VAPID do Web Push
+- `config/push.php` — chaves VAPID do Web Push e token do cron
 - `cron/send_reminders.php` — script que dispara os avisos (rodar via Cron Job do cPanel)
 - `sql/schema.sql` — script de criação das tabelas (instalação nova)
 - `sql/migration_push.sql` — script de migração para bancos já existentes
 - `sql/create_user.php` — script CLI para criar usuário de login
-- `assets/` — CSS, JS e ícones do front-end
+- `index.html` — home em formato calendário, com indicador de tarefas por dia
+- `list.html` — lista completa de tarefas (inclusive as sem prazo definido)
+- `assets/` — CSS, JS e ícones do front-end (`common.js` tem o que é compartilhado entre as páginas)
 - `manifest.json` / `sw.js` — configuração PWA (instalável, tema escuro, cache do shell, push)
 - `vendor/` — dependências PHP (Composer), commitadas para não precisar de SSH no servidor
