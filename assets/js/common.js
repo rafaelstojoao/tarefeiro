@@ -40,8 +40,9 @@ async function toggleTaskStatus(id, currentStatus) {
 }
 
 async function deleteTask(id) {
-    await fetch(`${API_BASE}/tasks.php`, {
-        method: 'DELETE',
+    // POST em vez de DELETE: a hospedagem não processa o verbo DELETE corretamente em scripts PHP
+    await fetch(`${API_BASE}/delete_task.php`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
     });
