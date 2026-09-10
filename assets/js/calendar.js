@@ -48,24 +48,32 @@ function renderGrid() {
     for (let i = 0; i < firstWeekday; i++) {
         const blank = document.createElement('div');
         blank.className = 'calendar-day calendar-day-blank';
+        if (i === 0 || i === 6) blank.classList.add('is-weekend');
         calGrid.appendChild(blank);
     }
 
+    const maxChips = 2;
+
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const weekday = (firstWeekday + day - 1) % 7;
         const cell = document.createElement('button');
         cell.type = 'button';
         cell.className = 'calendar-day';
+        if (weekday === 0 || weekday === 6) cell.classList.add('is-weekend');
         if (dateStr === todayStr) cell.classList.add('is-today');
         if (dateStr === selectedDate) cell.classList.add('is-selected');
 
         const tasksOnDay = tasksByDate[dateStr] || [];
-        const dotsHtml = tasksOnDay
-            .slice(0, 3)
-            .map((t) => `<span class="calendar-dot calendar-dot-${t.priority}"></span>`)
+        const chipsHtml = tasksOnDay
+            .slice(0, maxChips)
+            .map((t) => `<div class="calendar-task-chip priority-${t.priority}">${escapeHtml(t.title)}</div>`)
             .join('');
+        const moreHtml = tasksOnDay.length > maxChips
+            ? `<div class="calendar-more">+${tasksOnDay.length - maxChips} mais</div>`
+            : '';
 
-        cell.innerHTML = `<span>${day}</span><div class="calendar-dots">${dotsHtml}</div>`;
+        cell.innerHTML = `<span class="calendar-day-num">${day}</span>${chipsHtml}${moreHtml}`;
         cell.addEventListener('click', () => {
             selectedDate = dateStr;
             renderGrid();
