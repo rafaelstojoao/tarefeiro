@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('America/Sao_Paulo');
+
 // Credenciais do banco - ajuste para cada ambiente (local XAMPP vs cPanel)
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'projdev_tarefeiro');

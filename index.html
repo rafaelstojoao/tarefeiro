@@ -18,7 +18,10 @@
 <nav class="navbar navbar-dark bg-dark border-bottom border-secondary-subtle">
   <div class="container" style="max-width:480px;">
     <span class="navbar-brand mb-0 h1">Tarefeiro</span>
-    <button class="btn btn-sm btn-outline-secondary" id="logout-btn">Sair</button>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-secondary" id="notif-btn" title="Ativar avisos">🔔</button>
+      <button class="btn btn-sm btn-outline-secondary" id="logout-btn">Sair</button>
+    </div>
   </div>
 </nav>
 
@@ -60,6 +63,28 @@
             <div class="col mb-3">
               <label class="form-label">Prazo</label>
               <input type="date" class="form-control" id="task-due-date">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Horário (opcional)</label>
+            <input type="time" class="form-control" id="task-due-time">
+          </div>
+          <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="task-reminder-toggle">
+            <label class="form-check-label" for="task-reminder-toggle">Me avisar antes do prazo</label>
+          </div>
+          <div class="row" id="task-reminder-fields" hidden>
+            <div class="col mb-3">
+              <label class="form-label">Antecedência</label>
+              <input type="number" class="form-control" id="task-reminder-amount" min="1" value="30">
+            </div>
+            <div class="col mb-3">
+              <label class="form-label">Unidade</label>
+              <select class="form-select" id="task-reminder-unit">
+                <option value="minutos">Minutos</option>
+                <option value="horas">Horas</option>
+                <option value="dias">Dias</option>
+              </select>
             </div>
           </div>
         </div>

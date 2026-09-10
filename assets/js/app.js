@@ -42,7 +42,11 @@ function renderTasks(tasks) {
         li.dataset.priority = task.priority;
 
         const dueDateHtml = task.due_date
-            ? `<span class="badge text-bg-secondary">${formatDueDate(task.due_date)}</span>`
+            ? `<span class="badge text-bg-secondary">${formatDueDate(task.due_date)}${task.due_time ? ' ' + task.due_time.slice(0, 5) : ''}</span>`
+            : '';
+
+        const reminderHtml = task.reminder_amount
+            ? `<span class="badge text-bg-secondary">🔔 ${task.reminder_amount} ${task.reminder_unit} antes</span>`
             : '';
 
         li.innerHTML = `
@@ -53,6 +57,7 @@ function renderTasks(tasks) {
                 <div class="d-flex gap-2 mt-2 flex-wrap">
                     <span class="badge text-bg-secondary">${PRIORITY_LABELS[task.priority]}</span>
                     ${dueDateHtml}
+                    ${reminderHtml}
                 </div>
             </div>
             <button class="btn btn-sm btn-link text-secondary" data-action="delete" data-id="${task.id}">&times;</button>
@@ -112,12 +117,25 @@ async function openEditModal(id) {
     document.getElementById('task-description').value = task.description || '';
     document.getElementById('task-priority').value = task.priority;
     document.getElementById('task-due-date').value = task.due_date || '';
+    document.getElementById('task-due-time').value = task.due_time ? task.due_time.slice(0, 5) : '';
+
+    const reminderToggle = document.getElementById('task-reminder-toggle');
+    reminderToggle.checked = !!task.reminder_amount;
+    document.getElementById('task-reminder-fields').hidden = !task.reminder_amount;
+    document.getElementById('task-reminder-amount').value = task.reminder_amount || 30;
+    document.getElementById('task-reminder-unit').value = task.reminder_unit || 'minutos';
+
     taskModal.show();
 }
+
+document.getElementById('task-reminder-toggle').addEventListener('change', (e) => {
+    document.getElementById('task-reminder-fields').hidden = !e.target.checked;
+});
 
 document.getElementById('add-task-btn').addEventListener('click', () => {
     taskForm.reset();
     document.getElementById('task-id').value = '';
+    document.getElementById('task-reminder-fields').hidden = true;
     taskModalTitle.textContent = 'Nova tarefa';
 });
 
@@ -125,11 +143,16 @@ taskForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const id = document.getElementById('task-id').value;
+    const reminderOn = document.getElementById('task-reminder-toggle').checked;
+
     const payload = {
         title: document.getElementById('task-title').value.trim(),
         description: document.getElementById('task-description').value.trim(),
         priority: document.getElementById('task-priority').value,
         due_date: document.getElementById('task-due-date').value,
+        due_time: document.getElementById('task-due-time').value,
+        reminder_amount: reminderOn ? Number(document.getElementById('task-reminder-amount').value) : null,
+        reminder_unit: reminderOn ? document.getElementById('task-reminder-unit').value : null,
     };
 
     if (id) {
@@ -156,10 +179,83 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     window.location.href = 'login.html';
 });
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+const notifBtn = document.getElementById('notif-btn');
+
+async function updateNotifButton() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        notifBtn.hidden = true;
+        return;
+    }
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    notifBtn.classList.toggle('btn-outline-secondary', !subscription);
+    notifBtn.classList.toggle('btn-warning', !!subscription);
+    notifBtn.title = subscription ? 'Avisos ativados (toque para desativar)' : 'Ativar avisos';
+}
+
+async function enablePush() {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        alert('Permissão de notificação negada. Ative nas configurações do navegador para receber avisos.');
+        return;
+    }
+
+    const keyRes = await fetch(`${API_BASE}/push_public_key.php`);
+    const { publicKey } = await keyRes.json();
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
+
+    await fetch(`${API_BASE}/push_subscribe.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subscription.toJSON()),
+    });
+
+    await updateNotifButton();
+}
+
+async function disablePush() {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return;
+
+    await fetch(`${API_BASE}/push_unsubscribe.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+    });
+    await subscription.unsubscribe();
+    await updateNotifButton();
+}
+
+notifBtn.addEventListener('click', async () => {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (subscription) {
+        await disablePush();
+    } else {
+        await enablePush();
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        await navigator.serviceWorker.register('sw.js');
+        updateNotifButton();
+    });
+} else {
+    notifBtn.hidden = true;
 }
 
 checkSession();

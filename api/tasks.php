@@ -4,6 +4,18 @@ require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
+function parseReminder(array $input): array
+{
+    $amount = isset($input['reminder_amount']) ? (int)$input['reminder_amount'] : 0;
+    $unit = $input['reminder_unit'] ?? null;
+
+    if ($amount <= 0 || !in_array($unit, ['minutos', 'horas', 'dias'], true)) {
+        return [null, null];
+    }
+
+    return [$amount, $unit];
+}
+
 $pdo = getDbConnection();
 $userId = $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
@@ -11,7 +23,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $stmt = $pdo->prepare(
-            'SELECT id, title, description, priority, status, due_date, created_at, completed_at
+            'SELECT id, title, description, priority, status, due_date, due_time,
+                    reminder_amount, reminder_unit, created_at, completed_at
              FROM tasks WHERE user_id = ?
              ORDER BY status ASC, (due_date IS NULL), due_date ASC, FIELD(priority, "alta", "media", "baixa")'
         );
@@ -32,11 +45,14 @@ switch ($method) {
         $description = $input['description'] ?? null;
         $priority = in_array($input['priority'] ?? '', ['baixa', 'media', 'alta'], true) ? $input['priority'] : 'media';
         $dueDate = !empty($input['due_date']) ? $input['due_date'] : null;
+        $dueTime = !empty($input['due_time']) ? $input['due_time'] : null;
+        [$reminderAmount, $reminderUnit] = parseReminder($input);
 
         $stmt = $pdo->prepare(
-            'INSERT INTO tasks (user_id, title, description, priority, due_date) VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO tasks (user_id, title, description, priority, due_date, due_time, reminder_amount, reminder_unit)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$userId, $title, $description, $priority, $dueDate]);
+        $stmt->execute([$userId, $title, $description, $priority, $dueDate, $dueTime, $reminderAmount, $reminderUnit]);
 
         echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
         break;
@@ -75,9 +91,28 @@ switch ($method) {
             $fields[] = 'priority = ?';
             $params[] = $input['priority'];
         }
+        $reschedule = false;
+
         if (array_key_exists('due_date', $input)) {
             $fields[] = 'due_date = ?';
             $params[] = $input['due_date'] ?: null;
+            $reschedule = true;
+        }
+        if (array_key_exists('due_time', $input)) {
+            $fields[] = 'due_time = ?';
+            $params[] = $input['due_time'] ?: null;
+            $reschedule = true;
+        }
+        if (array_key_exists('reminder_amount', $input) || array_key_exists('reminder_unit', $input)) {
+            [$reminderAmount, $reminderUnit] = parseReminder($input);
+            $fields[] = 'reminder_amount = ?';
+            $params[] = $reminderAmount;
+            $fields[] = 'reminder_unit = ?';
+            $params[] = $reminderUnit;
+            $reschedule = true;
+        }
+        if ($reschedule) {
+            $fields[] = 'reminder_sent = 0';
         }
         if (isset($input['status']) && in_array($input['status'], ['pendente', 'concluida'], true)) {
             $fields[] = 'status = ?';

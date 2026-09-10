@@ -39,11 +39,33 @@ PWA de gestão de tarefas: PHP + MySQL no backend, HTML/JS puro + Bootstrap no f
 2. Toque no ícone de compartilhar (quadrado com seta pra cima) → **"Adicionar à Tela de Início"**.
 3. O ícone aparece na tela inicial e abre em tela cheia, sem barra de navegador.
 
+## Avisos por push notification
+
+Cada tarefa pode ter um aviso configurável ("me avisar X minutos/horas/dias antes do prazo"). Requer iOS 16.4+ **e** o app instalado pela tela de início (não funciona numa aba comum do Safari).
+
+**Configuração única no servidor (depois de cada deploy):**
+
+1. Garanta que a migração do banco rodou: acesse `https://seudominio.com/(subpasta)/api/migrate_temporario.php` uma vez pelo navegador (ele adiciona as colunas/tabela novas) e **depois apague esse arquivo do servidor**.
+2. No cPanel, vá em **Cron Jobs** e adicione uma tarefa rodando a cada 5 minutos:
+   ```
+   */5 * * * * /usr/local/bin/php /home/SEUUSUARIO/caminho/para/tasks/cron/send_reminders.php
+   ```
+   (ajuste o caminho para o local real do projeto no servidor; o cPanel geralmente mostra o caminho completo ao criar o cron)
+3. No app (ícone instalado no iPhone), toque no sino 🔔 no topo e permita as notificações.
+
+As chaves VAPID (`config/push.php`) já estão geradas e commitadas — não gere novas depois que alguém já tiver ativado os avisos, ou as inscrições existentes param de funcionar.
+
+A biblioteca PHP de push (`minishlink/web-push`) já vem **pré-instalada na pasta `vendor/`**, commitada no repositório — não é necessário rodar Composer no servidor.
+
 ## Estrutura
 
-- `api/` — endpoints PHP (login, logout, sessão, CRUD de tarefas)
-- `config/database.php` — credenciais do MySQL
-- `sql/schema.sql` — script de criação das tabelas
+- `api/` — endpoints PHP (login, logout, sessão, CRUD de tarefas, inscrição/push)
+- `config/database.php` — credenciais do MySQL e timezone da aplicação
+- `config/push.php` — chaves VAPID do Web Push
+- `cron/send_reminders.php` — script que dispara os avisos (rodar via Cron Job do cPanel)
+- `sql/schema.sql` — script de criação das tabelas (instalação nova)
+- `sql/migration_push.sql` — script de migração para bancos já existentes
 - `sql/create_user.php` — script CLI para criar usuário de login
 - `assets/` — CSS, JS e ícones do front-end
-- `manifest.json` / `sw.js` — configuração PWA (instalável, tema escuro, cache do shell)
+- `manifest.json` / `sw.js` — configuração PWA (instalável, tema escuro, cache do shell, push)
+- `vendor/` — dependências PHP (Composer), commitadas para não precisar de SSH no servidor
