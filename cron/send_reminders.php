@@ -9,6 +9,15 @@ require_once __DIR__ . '/../config/push.php';
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
+// Só exige token quando acessado via navegador/HTTP; chamadas via CLI (cron do cPanel) passam direto
+if (php_sapi_name() !== 'cli') {
+    $token = $_GET['token'] ?? '';
+    if (!hash_equals(CRON_SECRET, $token)) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
+}
+
 $secondsPerUnit = [
     'minutos' => 60,
     'horas' => 3600,
