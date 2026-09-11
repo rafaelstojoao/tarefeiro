@@ -1,51 +1,16 @@
-const CACHE_NAME = 'tarefeiro-v4';
-const APP_SHELL = [
-    'index.html',
-    'list.html',
-    'login.html',
-    'assets/css/style.css',
-    'assets/js/common.js',
-    'assets/js/calendar.js',
-    'assets/js/list.js',
-    'assets/js/login.js',
-    'manifest.json',
-];
+// Este Service Worker existe só para viabilizar os avisos por push notification.
+// Ele NÃO intercepta nem cacheia páginas/CSS/JS - tudo isso vai direto pra rede,
+// pra evitar telas com visual quebrado por cache desatualizado.
 
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-    );
+self.addEventListener('install', () => {
     self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-        )
+        caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
     );
     self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-    const { request } = event;
-
-    // Nunca cacheia chamadas de API - sempre busca dados frescos do servidor
-    if (request.url.includes('/api/')) {
-        return;
-    }
-
-    // Rede primeiro: sempre busca a versão mais nova quando online.
-    // O cache só é usado como reserva se a rede falhar (offline).
-    event.respondWith(
-        fetch(request)
-            .then((response) => {
-                const responseCopy = response.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(request, responseCopy));
-                return response;
-            })
-            .catch(() => caches.match(request))
-    );
 });
 
 self.addEventListener('push', (event) => {
