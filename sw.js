@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tarefeiro-v3';
+const CACHE_NAME = 'tarefeiro-v4';
 const APP_SHELL = [
     'index.html',
     'list.html',
@@ -35,8 +35,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Rede primeiro: sempre busca a versão mais nova quando online.
+    // O cache só é usado como reserva se a rede falhar (offline).
     event.respondWith(
-        caches.match(request).then((cached) => cached || fetch(request))
+        fetch(request)
+            .then((response) => {
+                const responseCopy = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(request, responseCopy));
+                return response;
+            })
+            .catch(() => caches.match(request))
     );
 });
 
